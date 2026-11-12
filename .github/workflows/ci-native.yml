@@ -31,8 +31,13 @@ jobs:
           FLASK_APP: wsgi.py
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          flask db migrate -m "Initial migration"
-          flask db upgrade
+          python -c "
+          from wsgi import app
+          from application.extensions import db
+          with app.app_context():
+              db.create_all()
+          print('Tables created successfully')
+          "
 
       - name: Debug Flask Routes
         env:

@@ -82,3 +82,7 @@ def redo(todo_id):
 @todo_bp.errorhandler(404)
 def page_not_found():
     return render_template('404.html'), 404
+
+@app.route('/')
+def index():
+    return "Flask App is running!", 200

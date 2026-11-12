@@ -2,6 +2,7 @@
 
 import flask
 from flask import request, redirect, flash, render_template, url_for
+from sqlalchemy import desc
 from application.extensions import db
 from application.models import Todo
 
@@ -13,7 +14,7 @@ todo_bp = flask.Blueprint(
 
 @todo_bp.route('/', methods=['GET', 'POST'])
 def index():
-    todo = Todo.query.order_by('-id')
+    todo = Todo.query.order_by(desc(Todo.id)).all()
     _form = request.form
 
     if request.method == 'POST':

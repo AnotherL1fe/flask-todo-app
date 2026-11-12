@@ -14,4 +14,6 @@ def create_app(config_name='default'):
     migrate.init_app(app, db)
 
     with app.app_context():
+        from . import models
+
     return app

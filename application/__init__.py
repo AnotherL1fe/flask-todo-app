@@ -16,4 +16,7 @@ def create_app(config_name='default'):
     with app.app_context():
         from . import models
 
+    from .controllers.todo import todo_bp
+    app.register_blueprint(todo_bp)
+
     return app

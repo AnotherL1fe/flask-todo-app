@@ -30,7 +30,9 @@ jobs:
         env:
           FLASK_APP: wsgi.py
           PYTHONPATH: ${{ github.workspace }}
-        run: flask db upgrade
+        run: |
+          flask db migrate -m "Initial migration"
+          flask db upgrade
 
       - name: Debug Flask Routes
         env:

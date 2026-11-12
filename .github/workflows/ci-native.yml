@@ -2,9 +2,9 @@ name: CI for Flask App
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   build-and-test:
@@ -24,9 +24,9 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Initialize SQLite DB and run migrations (if any)
+      - name: Initialize SQLite DB
         run: |
-          if [ -f init_db.py ]; then python init_db.py; fi
+          python -m flask --app manage db upgrade
 
       - name: Run linting (optional but recommended)
         run: |
@@ -35,15 +35,24 @@ jobs:
 
       - name: Start Flask server in background
         run: |
-          export FLASK_APP=manage.py
-          export FLASK_ENV=development
-          nohup flask run --host=0.0.0.0 --port=5000 > server.log 2>&1 &
-          sleep 5
+          nohup python manage.py runserver --host 0.0.0.0 --port 5000 > server.log 2>&1 &
+          echo $! > server.pid
 
-      - name: Smoke test Flask server with curl
+      - name: Wait for server and smoke test
         run: |
-          curl -f http://localhost:5000/ || (echo "Smoke test failed: server did not respond" && exit 1)
-
-      - name: Show server logs (for debugging)
-        if: always()
-        run: cat server.log
+          for i in {1..30}; do
+            if curl -sf http://localhost:5000/ > /dev/null; then
+              echo "Server is up!"
+              curl -f http://localhost:5000/
+              exit 0
+            fi
+            if ! kill -0 $(cat server.pid) 2>/dev/null; then
+              echo "Server process died. Log:"
+              cat server.log
+              exit 1
+            fi
+            sleep 1
+          done
+          echo "Server did not respond in 30 seconds. Log:"
+          cat server.log
+          exit 1
